@@ -3,9 +3,12 @@ import Link from 'next/link'
 import { useAuthContext } from '@/src/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-const page = () => {
+import './globals.css'
+
+const RootPage = () => {
   const router = useRouter()
   const { user } = useAuthContext()
+
   useEffect(() => {
     if (user != null) {
       user.getIdTokenResult().then((idTokenResult) => {
@@ -15,20 +18,13 @@ const page = () => {
           router.replace('/UserDashBoard')
         }
       })
+    } else {
+      router.replace('/Login')
     }
   }, [user])
-  return (
-    <div>
-      <main>
-        <h1>HELLO WORLD</h1>
-      </main>
-      <div className='card-actions justify-center'>
-        <Link href='/Login'>
-          <button className='btn btn-primary'>Login</button>
-        </Link>
-      </div>
-    </div>
-  )
+
+  // Show nothing while redirect happens
+  return null
 }
 
-export default page
+export default RootPage

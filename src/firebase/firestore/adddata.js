@@ -11,7 +11,8 @@ export default async function addDataseis(data, id = 'IFT510') {
   // db.settings({ timestampsInSnapshots: true })
   // console.log(k, typeof k, 'JK ROWLINGGG')
   try {
-    result = await updateDoc(doc(db, process.env.NEXT_PUBLIC_collection, id), k)
+    await updateDoc(doc(db, process.env.NEXT_PUBLIC_collection, id), k)
+    result = true
   } catch (e) {
     error = e
   }

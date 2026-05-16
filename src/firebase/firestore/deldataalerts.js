@@ -12,10 +12,11 @@ export default async function delDataalerts(data, id = 'IFT510') {
   // db.settings({ timestampsInSnapshots: true })
   // console.log(k, typeof k, 'JK ROWLINGGG', 'deleteionnn')
   try {
-    result = await updateDoc(
+    await updateDoc(
       doc(db, process.env.NEXT_PUBLIC_collection_alerts, id),
       k
     )
+    result = true
   } catch (e) {
     error = e
   }

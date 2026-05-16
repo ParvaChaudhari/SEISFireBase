@@ -3,112 +3,127 @@ import * as d3 from 'd3'
 
 const LineGraph = ({ data }) => {
   const svgRef = useRef()
+  const containerRef = useRef()
 
   useEffect(() => {
-    const svg = d3.select(svgRef.current)
+    if (!data || data.length === 0) return
 
-    // Set up the dimensions for the chart
-    const margin = { top: 50, right: 80, bottom: 40, left: 60 } // Increased left margin for y-axis labels
-    const width = 900 - margin.left - margin.right
-    const height = 600 - margin.top - margin.bottom
+    const handleResize = () => {
+      const containerWidth = containerRef.current.clientWidth
+      const containerHeight = 400
+      
+      const svg = d3.select(svgRef.current)
+      svg.selectAll('*').remove()
 
-    // Parse dates
-    const parseDate = d3.timeParse('%Y-%m-%d')
-    data.forEach((d) => {
-      d.date = parseDate(d[0])
-      d.value = d[1]
-    })
+      const margin = { top: 20, right: 30, bottom: 40, left: 50 }
+      const width = containerWidth - margin.left - margin.right
+      const height = containerHeight - margin.top - margin.bottom
 
-    // Set up scales
-    const x = d3.scaleTime().range([0, width])
-    const y = d3.scaleLinear().range([height, 0])
+      // Parse dates
+      const parseDate = d3.timeParse('%Y-%m-%d')
+      const formattedData = data.map(d => ({
+        date: parseDate(d[0]),
+        value: d[1]
+      }))
 
-    x.domain(d3.extent(data, (d) => d.date))
-    y.domain([0, d3.max(data, (d) => d.value)])
+      // Set up scales
+      const x = d3.scaleTime()
+        .domain(d3.extent(formattedData, d => d.date))
+        .range([0, width])
 
-    // Create line generator
-    const line = d3
-      .line()
-      .x((d) => x(d.date))
-      .y((d) => y(d.value))
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(formattedData, d => d.value) * 1.1])
+        .range([height, 0])
 
-    // Clear existing chart elements
-    svg.selectAll('*').remove()
+      // Create line generator
+      const line = d3.line()
+        .x(d => x(d.date))
+        .y(d => y(d.value))
+        .curve(d3.curveMonotoneX)
 
-    // Create a group element for the main chart
-    const chartGroup = svg
-      .append('g')
-      .attr('transform', `translate(${margin.left}, ${margin.top})`)
+      const chartGroup = svg
+        .attr('width', containerWidth)
+        .attr('height', containerHeight)
+        .append('g')
+        .attr('transform', `translate(${margin.left}, ${margin.top})`)
 
-    // Add the X and Y axes
-    chartGroup
-      .append('g')
-      .attr('class', 'x-axis')
-      .attr('transform', `translate(0, ${height})`)
-      .call(d3.axisBottom(x))
+      // Add Grid Lines
+      chartGroup.append('g')
+        .attr('class', 'grid')
+        .attr('opacity', 0.1)
+        .call(d3.axisLeft(y).tickSize(-width).tickFormat(''))
 
-    chartGroup
-      .append('g')
-      .attr('class', 'y-axis')
-      .call(d3.axisLeft(y))
-      .append('text')
-      .attr('class', 'y-axis-label')
-      .attr('transform', 'rotate(-90)')
-      .attr('y', -50) // Adjust the label position
-      .attr('x', -height / 2)
-      .attr('dy', '1em')
-      .style('text-anchor', 'middle')
-      .text('Count') // Label text
+      // Add Axes
+      chartGroup.append('g')
+        .attr('transform', `translate(0, ${height})`)
+        .call(d3.axisBottom(x).ticks(6))
+        .attr('class', 'text-soft-gray font-label-md')
 
-    // Add the line without shading
-    chartGroup
-      .append('path')
-      .datum(data)
-      .attr('class', 'line')
-      .attr('d', line)
-      .attr('fill', 'none') // Remove area fill
-      .attr('stroke', 'steelblue') // Set line color
+      chartGroup.append('g')
+        .call(d3.axisLeft(y).ticks(5))
+        .attr('class', 'text-soft-gray font-label-md')
 
-    // Add dots and tooltips
-    chartGroup
-      .selectAll('.dot')
-      .data(data)
-      .enter()
-      .append('circle')
-      .attr('class', 'dot')
-      .attr('cx', (d) => x(d.date))
-      .attr('cy', (d) => y(d.value))
-      .attr('r', 3) // Radius of the dots
-      .on('mouseover', function (event, d) {
-        // Show tooltip on hover
-        const [xPos, yPos] = d3.pointer(event)
-        const tooltipX = xPos + 130 > width ? xPos - 250 : xPos + 10 // Adjust tooltip position
-        const tooltipY = yPos - 130 > height ? yPos - 20 : yPos - 10 // Adjust tooltip position
-        chartGroup
-          .append('text')
-          .attr('class', 'tooltip')
-          .attr('x', tooltipX)
-          .attr('y', tooltipY)
-          .style('fill', 'rgba(255, 255, 255, 0.9)') // Set off-white text color
-          .text(`Date: ${d3.timeFormat('%Y-%m-%d')(d.date)}, Count: ${d.value}`)
-      })
-      .on('mouseout', function () {
-        // Remove tooltip on mouseout
-        chartGroup.select('.tooltip').remove()
-      })
+      // Add Gradient
+      const gradient = svg.append("defs")
+        .append("linearGradient")
+        .attr("id", "line-gradient")
+        .attr("gradientUnits", "userSpaceOnUse")
+        .attr("x1", 0).attr("y1", y(0))
+        .attr("x2", 0).attr("y2", y(d3.max(formattedData, d => d.value)))
+
+      gradient.append("stop").attr("offset", "0%").attr("stop-color", "#004e9f").attr("stop-opacity", 0.1)
+      gradient.append("stop").attr("offset", "100%").attr("stop-color", "#004e9f").attr("stop-opacity", 0.3)
+
+      // Add Area
+      const area = d3.area()
+        .x(d => x(d.date))
+        .y0(height)
+        .y1(d => y(d.value))
+        .curve(d3.curveMonotoneX)
+
+      chartGroup.append('path')
+        .datum(formattedData)
+        .attr('d', area)
+        .attr('fill', 'url(#line-gradient)')
+
+      // Add Line
+      chartGroup.append('path')
+        .datum(formattedData)
+        .attr('d', line)
+        .attr('fill', 'none')
+        .attr('stroke', '#004e9f')
+        .attr('stroke-width', 3)
+
+      // Add Dots
+      chartGroup.selectAll('.dot')
+        .data(formattedData)
+        .enter()
+        .append('circle')
+        .attr('cx', d => x(d.date))
+        .attr('cy', d => y(d.value))
+        .attr('r', 4)
+        .attr('fill', '#004e9f')
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 2)
+        .on('mouseover', function(event, d) {
+          d3.select(this).transition().attr('r', 6)
+        })
+        .on('mouseout', function() {
+          d3.select(this).transition().attr('r', 4)
+        })
+    }
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [data])
 
   return (
-    <div style={{ textAlign: 'center' }}>
-      <h2>Line Graph</h2>
-      <svg ref={svgRef} width='900' height='600'>
-        {/* No need to adjust the positioning here */}
-        <g className='x-axis' />
-        <g className='y-axis' />
-        <path className='line' />
-      </svg>
+    <div ref={containerRef} className="w-full">
+      <svg ref={svgRef} className="overflow-visible"></svg>
     </div>
   )
 }
 
 export default LineGraph
+

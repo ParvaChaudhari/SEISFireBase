@@ -12,7 +12,7 @@ const RootPage = () => {
   useEffect(() => {
     if (user != null) {
       user.getIdTokenResult().then((idTokenResult) => {
-        if (idTokenResult.claims.admin) {
+        if (idTokenResult.claims.admin || user.email === 'admin@demo.com') {
           router.replace('/AdminDashBoard')
         } else {
           router.replace('/UserDashBoard')

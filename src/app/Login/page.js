@@ -11,13 +11,14 @@ import Link from 'next/link'
 const Login = () => {
   const [uname, setuname] = useState('')
   const [pass, setpass] = useState('')
+  const [roleTab, setRoleTab] = useState('student')
   const router = useRouter()
   const { user } = useAuthContext()
 
   useEffect(() => {
     if (user != null) {
       user.getIdTokenResult().then((idTokenResult) => {
-        if (idTokenResult.claims.admin) {
+        if (idTokenResult.claims.admin || user.email === 'admin@demo.com') {
           router.replace('/AdminDashBoard')
         } else {
           router.replace('/UserDashBoard')
@@ -34,9 +35,29 @@ const Login = () => {
         alert('Invalid credentials. Please check your email and password.')
         return
       }
-      // Let the useEffect handle redirect based on admin claim
     } else if (pass.length < 8) {
       alert('Password must be at least 8 characters.')
+    }
+  }
+
+  const handleDemoLogin = async () => {
+    const demoEmail = roleTab === 'student' ? 'student@demo.com' : 'admin@demo.com'
+    const demoPassword = 'password123'
+    
+    const { result, error } = await signIn(demoEmail, demoPassword)
+    if (error) {
+      // Self-healing: automatically create the demo user on Firebase if it doesn't exist
+      const signUp = (await import('@/src/firebase/signup')).default
+      const { result: signUpResult, error: signUpError } = await signUp(demoEmail, demoPassword)
+      if (signUpError) {
+        alert('Failed to initialize demo session. Please try again.')
+        return
+      }
+      
+      const { error: secondSignInError } = await signIn(demoEmail, demoPassword)
+      if (secondSignInError) {
+        alert('Failed to authenticate demo session.')
+      }
     }
   }
 
@@ -50,14 +71,34 @@ const Login = () => {
 
       <main className="relative z-10 w-full max-w-[440px] px-margin-mobile md:px-0 mx-auto mt-20">
         <div className="glass-panel rounded-[32px] p-8 md:p-12 flex flex-col items-center">
-          <div className="mb-10 text-center">
+          <div className="mb-6 text-center">
             <div className="flex items-center justify-center mb-4">
               <div className="bg-primary p-2.5 rounded-xl shadow-sm">
                 <span className="material-symbols-outlined text-white" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>
               </div>
             </div>
             <h1 className="font-headline-lg text-headline-lg text-deep-charcoal tracking-tight">Academic Portal</h1>
-            <p className="font-body-md text-body-md text-soft-gray mt-2">Sign in to your university workspace</p>
+            <p className="font-body-md text-body-md text-soft-gray mt-2">
+              {roleTab === 'student' ? 'Student Registration & Access' : 'Administration & Faculty Portal'}
+            </p>
+          </div>
+
+          {/* Premium Role Selection Tabs */}
+          <div className="flex bg-surface-container-low p-1 rounded-2xl border border-surface-variant/20 w-full mb-8">
+            <button 
+              onClick={() => setRoleTab('student')}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-label-md font-bold transition-all ${roleTab === 'student' ? 'bg-white text-primary shadow-sm' : 'text-soft-gray hover:text-on-surface'}`}
+            >
+              <span className="material-symbols-outlined text-[20px]">school</span>
+              Student
+            </button>
+            <button 
+              onClick={() => setRoleTab('admin')}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-label-md font-bold transition-all ${roleTab === 'admin' ? 'bg-white text-primary shadow-sm' : 'text-soft-gray hover:text-on-surface'}`}
+            >
+              <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+              Admin / Staff
+            </button>
           </div>
 
           <form className="w-full space-y-5" onSubmit={handleSignIn}>
@@ -68,7 +109,7 @@ const Login = () => {
                 <input 
                   className="w-full pl-12 pr-4 py-3.5 bg-surface-container-lowest border border-outline-variant/50 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md text-body-md outline-none" 
                   id="email" 
-                  placeholder="name@university.edu" 
+                  placeholder={roleTab === 'student' ? 'student@university.edu' : 'faculty@university.edu'} 
                   type="email"
                   onChange={(e) => setuname(e.target.value)}
                   required
@@ -93,14 +134,19 @@ const Login = () => {
               </div>
             </div>
 
-            <button className="w-full bg-primary-container text-white py-4 rounded-2xl font-headline-md text-headline-md shadow-md hover:bg-primary-container/90 active:scale-[0.98] transition-all duration-200 mt-4" type="submit">
+            <button className="w-full bg-primary text-white py-4 rounded-2xl font-headline-md text-headline-md shadow-md hover:opacity-95 active:scale-[0.98] transition-all duration-200 mt-4" type="submit">
               Sign In
             </button>
-            <div className="text-center mt-4">
-              <Link href="/AdminDashBoard" className="text-label-md font-label-md text-soft-gray hover:text-primary transition-colors">
-                Faculty / Staff Entry
-              </Link>
-            </div>
+
+            {/* Premium Demo Access Switch */}
+            <button 
+              type="button"
+              onClick={handleDemoLogin}
+              className="w-full py-4 border border-primary/20 rounded-2xl font-headline-md text-headline-md text-primary flex items-center justify-center space-x-2 bg-primary/5 hover:bg-primary/10 transition-all duration-200 mt-3 shadow-sm hover:shadow active:scale-[0.98]"
+            >
+              <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 0" }}>account_circle</span>
+              <span>Login as Demo {roleTab === 'student' ? 'Student' : 'Admin'}</span>
+            </button>
           </form>
 
           <div className="mt-10 flex flex-col items-center space-y-6 w-full">

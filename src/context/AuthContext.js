@@ -11,11 +11,23 @@ export const useAuthContext = () => useContext(AuthContext)
 
 export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user || null)
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        try {
+          const idTokenResult = await currentUser.getIdTokenResult()
+          setIsAdmin(!!idTokenResult.claims.admin || currentUser.email === 'admin@demo.com')
+        } catch (e) {
+          setIsAdmin(currentUser.email === 'admin@demo.com')
+        }
+        setUser(currentUser)
+      } else {
+        setIsAdmin(false)
+        setUser(null)
+      }
       setLoading(false)
     })
     return () => unsubscribe()
@@ -55,7 +67,7 @@ export const AuthContextProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user }}>
+    <AuthContext.Provider value={{ user, isAdmin }}>
       {children}
     </AuthContext.Provider>
   )

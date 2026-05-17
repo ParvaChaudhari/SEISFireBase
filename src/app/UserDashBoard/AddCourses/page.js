@@ -11,23 +11,19 @@ const AddCourses = () => {
   const [courseList, setCourseList] = useState([])
   const [loading, setLoading] = useState(true)
   const [enrolling, setEnrolling] = useState(null)
-  const { user } = useAuthContext()
+  const { user, isAdmin } = useAuthContext()
   const router = useRouter()
   const count = useRef(0)
 
   useEffect(() => {
-    if (user != null) {
-      user.getIdTokenResult().then((idTokenResult) => {
-        if (idTokenResult.claims.admin) {
-          router.replace('/AdminDashBoard')
-        } else {
-          fetchCourses()
-        }
-      })
-    } else {
+    if (user === null) {
       router.replace('/Login')
+    } else if (isAdmin) {
+      router.replace('/AdminDashBoard')
+    } else {
+      fetchCourses()
     }
-  }, [user])
+  }, [user, isAdmin])
 
   const fetchCourses = async () => {
     setLoading(true)

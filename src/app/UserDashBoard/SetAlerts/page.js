@@ -12,23 +12,19 @@ const SetAlerts = () => {
   const [courseOptions, setCourseOptions] = useState([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const { user } = useAuthContext()
+  const { user, isAdmin } = useAuthContext()
   const router = useRouter()
   const count = useRef(0)
 
   useEffect(() => {
-    if (user != null) {
-      user.getIdTokenResult().then((idTokenResult) => {
-        if (idTokenResult.claims.admin) {
-          router.replace('/AdminDashBoard')
-        } else {
-          fetchAlertOptions()
-        }
-      })
-    } else {
+    if (user === null) {
       router.replace('/Login')
+    } else if (isAdmin) {
+      router.replace('/AdminDashBoard')
+    } else {
+      fetchAlertOptions()
     }
-  }, [user])
+  }, [user, isAdmin])
 
   const fetchAlertOptions = async () => {
     setLoading(true)

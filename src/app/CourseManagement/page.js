@@ -8,31 +8,23 @@ import getAllCourseIds from '@/src/firebase/firestore/getAllCourseIds'
 import createNewCourse from '@/src/firebase/firestore/createNewCourse'
 
 const CourseManagement = () => {
-  const { user } = useAuthContext()
+  const { user, isAdmin } = useAuthContext()
   const router = useRouter()
   
   const [newCourseId, setNewCourseId] = useState('')
-  const [isAuthorized, setIsAuthorized] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [courses, setCourses] = useState([])
 
   useEffect(() => {
-    if (user != null) {
-      user.getIdTokenResult().then((idTokenResult) => {
-        if (idTokenResult.claims.admin) {
-          setIsAuthorized(true)
-          fetchCourses()
-        } else {
-          setIsAuthorized(false)
-          alert('Not Authorized')
-          router.replace('/UserDashBoard')
-        }
-      })
-    } else {
+    if (user === null) {
       router.replace('/Login')
+    } else if (isAdmin) {
+      fetchCourses()
+    } else {
+      router.replace('/UserDashBoard')
     }
-  }, [user])
+  }, [user, isAdmin])
 
   const fetchCourses = async () => {
     setLoading(true)
@@ -64,11 +56,9 @@ const CourseManagement = () => {
     setSubmitting(false)
   }
 
-  if (!isAuthorized) return null
-
   return (
     <div className="bg-background-off-white min-h-screen">
-      <Navigation isAdmin={true} />
+      <Navigation />
       
       <main className="max-w-container-max mx-auto px-4 md:px-margin-desktop py-12">
         <div className="mb-12">

@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Enrollments Collection:
+    // Any authenticated student/faculty can read enrollment counts.
+    // Writes are permitted for active authenticated sessions.
+    match /enrollments/{courseId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Summary Collection:
+    // Holds D3 historical timeline data. Anyone authenticated can read.
+    // Writes are strictly restricted to authenticated Admin users or the demo admin account.
+    match /summary/{courseId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (request.auth.token.admin == true || request.auth.token.email == 'admin@demo.com');
+    }
+
+    // Alerts Collection:
+    // Notification parameters set by individual students.
+    // Access is granted to all authenticated academic accounts.
+    match /alerts/{courseId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

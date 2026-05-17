@@ -11,7 +11,7 @@ import delDataalerts from '@/src/firebase/firestore/deldataalerts'
 
 const UserDashBoard = () => {
   const router = useRouter()
-  const { user } = useAuthContext()
+  const { user, isAdmin } = useAuthContext()
   const [courses, setCourses] = useState([])
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -19,19 +19,17 @@ const UserDashBoard = () => {
   const isFirstRender = useRef(true)
 
   useEffect(() => {
-    if (user != null) {
-      user.getIdTokenResult().then((idTokenResult) => {
-        if (idTokenResult.claims.admin) {
-          router.replace('/AdminDashBoard')
-        } else {
-          fetchData()
-        }
-      })
-    } else if (!isFirstRender.current) {
-      router.replace('/Login')
+    if (user === null) {
+      if (!isFirstRender.current) {
+        router.replace('/Login')
+      }
+    } else if (isAdmin) {
+      router.replace('/AdminDashBoard')
+    } else {
+      fetchData()
     }
     isFirstRender.current = false
-  }, [user])
+  }, [user, isAdmin])
 
   const fetchData = async () => {
     setLoading(true)

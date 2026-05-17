@@ -4,10 +4,12 @@ import { signOut } from 'firebase/auth'
 import { auth } from '@/src/context/AuthContext'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { useAuthContext } from '@/src/context/AuthContext'
 
-const Navigation = ({ isAdmin = false }) => {
+const Navigation = () => {
   const router = useRouter()
   const pathname = usePathname()
+  const { isAdmin } = useAuthContext()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
 
   const handleSignOut = () => {
@@ -32,8 +34,8 @@ const Navigation = ({ isAdmin = false }) => {
       ]
 
   return (
-    <header className="sticky top-0 z-50 bg-surface/80 backdrop-blur-xl border-b border-white/20 shadow-sm">
-      <div className="flex justify-between items-center w-full px-4 md:px-margin-desktop py-4 max-w-container-max mx-auto">
+    <header className="sticky top-0 z-50 bg-surface/80 backdrop-blur-xl border-b border-[#E2E2E4] shadow-sm">
+      <div className="flex justify-between items-center w-full px-4 md:px-margin-desktop max-w-container-max mx-auto h-[68px]">
         <div className="flex items-center gap-4">
           {/* Mobile Menu Toggle */}
           <button 
@@ -48,21 +50,24 @@ const Navigation = ({ isAdmin = false }) => {
           </div>
         </div>
         
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center space-x-8">
-          {navLinks.map((link) => (
-            <Link 
-              key={link.name}
-              href={link.href}
-              className={`${
-                pathname === link.href 
-                  ? 'text-primary font-bold border-b-2 border-primary pb-1' 
-                  : 'text-soft-gray hover:text-on-surface'
-              } transition-colors text-body-md font-body-md`}
-            >
-              {link.name}
-            </Link>
-          ))}
+        {/* Desktop Nav with links flush with bottom boundary */}
+        <nav className="hidden md:flex items-stretch space-x-8 h-full">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link 
+                key={link.name}
+                href={link.href}
+                className={`flex items-center border-b-[3px] px-1 transition-all text-body-md font-body-md mt-[3px] ${
+                  isActive 
+                    ? 'border-primary text-primary font-bold' 
+                    : 'border-transparent text-soft-gray hover:text-on-surface hover:border-soft-gray/20'
+                }`}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center space-x-4">
@@ -81,6 +86,7 @@ const Navigation = ({ isAdmin = false }) => {
           </button>
         </div>
       </div>
+
 
       {/* Mobile Nav Dropdown */}
       {isMobileMenuOpen && (

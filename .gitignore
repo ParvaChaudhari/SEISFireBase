@@ -38,3 +38,7 @@ serviceAccountKey.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local agent environment
+.agents/
+skills-lock.json

@@ -87,44 +87,40 @@ const UserDashBoard = () => {
               <h2 className="font-headline-lg text-headline-lg text-on-surface">Enrolled Courses</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+            <div className="space-y-4">
               {loading ? (
                 // Skeleton loading state
                 [1,2].map(i => (
-                  <div key={i} className="glass-card ambient-shadow p-6 rounded-2xl h-[200px] animate-pulse">
-                    <div className="flex justify-between mb-4">
-                      <div className="w-10 h-10 rounded-xl bg-surface-container"></div>
+                  <div key={i} className="bg-white p-5 rounded-2xl border border-outline-variant/20 animate-pulse h-16">
+                    <div className="flex justify-between items-center">
+                      <div className="w-32 h-4 bg-surface-container rounded"></div>
                       <div className="w-6 h-6 rounded bg-surface-container"></div>
                     </div>
-                    <div className="h-5 w-3/4 bg-surface-container rounded mb-2"></div>
-                    <div className="h-4 w-1/2 bg-surface-container rounded"></div>
                   </div>
                 ))
               ) : (
                 <>
                   {courses.length === 0 && (
-                    <div className="md:col-span-2 glass-card p-12 rounded-2xl text-center text-soft-gray font-body-md">
+                    <div className="bg-white p-8 rounded-2xl border border-outline-variant/20 text-center text-soft-gray font-body-md">
                       No courses enrolled yet. Head to "Add Course" to get started.
                     </div>
                   )}
                   
                   {courses.map((courseId) => (
-                    <div key={courseId} className="glass-card ambient-shadow p-6 rounded-2xl flex flex-col justify-between h-[200px] group border border-transparent hover:border-primary/30 transition-all">
-                      <div>
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="bg-primary-container/10 p-3 rounded-xl">
-                            <span className="material-symbols-outlined text-primary">school</span>
-                          </div>
-                          <button 
-                            onClick={() => handleDeleteCourse(courseId)}
-                            className="text-error/50 hover:text-error transition-colors p-2"
-                          >
-                            <span className="material-symbols-outlined">delete</span>
-                          </button>
-                        </div>
-                        <h3 className="font-headline-md text-headline-md text-deep-charcoal">{courseId}</h3>
-                        <p className="text-soft-gray text-body-md">Spring 2024</p>
+                    <div key={courseId} className="bg-white p-5 rounded-2xl border border-outline-variant/20 flex gap-4 items-center shadow-sm hover:shadow-md transition-shadow group">
+                      <div className="shrink-0 w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-primary">school</span>
                       </div>
+                      <div className="flex-grow">
+                        <h3 className="font-headline-md text-headline-md text-deep-charcoal">{courseId}</h3>
+                        <p className="text-soft-gray text-body-sm">Spring 2024</p>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteCourse(courseId)}
+                        className="text-error/50 hover:text-error transition-colors p-2 opacity-0 group-hover:opacity-100"
+                      >
+                        <span className="material-symbols-outlined">delete</span>
+                      </button>
                     </div>
                   ))}
                 </>
@@ -161,25 +157,7 @@ const UserDashBoard = () => {
               ))}
             </div>
 
-            {/* Progress Card */}
-            <div className="glass-card ambient-shadow p-8 rounded-2xl mt-8">
-              <h3 className="font-headline-md text-headline-md text-deep-charcoal mb-6">Academic Progress</h3>
-              <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-label-md font-label-md text-soft-gray">Degree Completion</span>
-                    <span className="text-label-md font-label-md text-on-surface">65%</span>
-                  </div>
-                  <div className="w-full bg-surface-container rounded-full h-1.5">
-                    <div className="bg-primary h-1.5 rounded-full" style={{ width: '65%' }}></div>
-                  </div>
-                </div>
-                <div className="flex justify-between py-4 border-t border-outline-variant/10">
-                  <span className="text-body-md text-soft-gray">Current GPA</span>
-                  <span className="text-headline-md font-headline-md text-primary">3.82</span>
-                </div>
-              </div>
-            </div>
+           
           </aside>
         </div>
       </main>

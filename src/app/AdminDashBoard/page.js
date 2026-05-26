@@ -7,8 +7,8 @@ import { useRouter } from 'next/navigation'
 import LineGraph from './LineGraph'
 import DonutChart from './DonutChart'
 import CapacityBarChart from './CapacityBarChart'
-import getsummaire from '@/src/firebase/firestore/getsummaire'
-import getAllCourseIds from '@/src/firebase/firestore/getAllCourseIds'
+import listenSummaire from '@/src/firebase/firestore/getsummaire-realtime'
+import listenAllCourseIds from '@/src/firebase/firestore/getAllCourseIds-realtime'
 
 const AdminDashBoard = () => {
   const { user, isAdmin } = useAuthContext()
@@ -27,6 +27,10 @@ const AdminDashBoard = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const dropdownRef = useRef(null)
 
+  // Real-time listener unsubscribes
+  const unsubAllCoursesRef = useRef(null)
+  const unsubCourseStatsRef = useRef({})
+
   // Dynamic KPIs for the selected course
   const [kpiData, setKpiData] = useState({
     totalEnrolled: 0,
@@ -39,9 +43,15 @@ const AdminDashBoard = () => {
     if (user === null) {
       router.replace('/Login')
     } else if (isAdmin) {
-      fetchCoursesAndStats()
+      setupRealTimeListeners()
     } else {
       router.replace('/UserDashBoard')
+    }
+
+    return () => {
+      // Cleanup all listeners on unmount
+      if (unsubAllCoursesRef.current) unsubAllCoursesRef.current()
+      Object.values(unsubCourseStatsRef.current).forEach(unsub => unsub())
     }
   }, [user, isAdmin])
 
@@ -56,42 +66,81 @@ const AdminDashBoard = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const fetchCoursesAndStats = async () => {
+  const setupRealTimeListeners = () => {
     setLoading(true)
-    try {
-      const result = await getAllCourseIds()
-      if (result?.send && result.send.length > 0) {
-        setCourseOptions(result.send)
-        
-        // Fetch stats for all courses to calculate "Popular Courses" and "All Courses" aggregates
-        const stats = await Promise.all(result.send.map(async (id) => {
-          const sumRes = await getsummaire(id)
-          const dates = sumRes?.data ? Object.keys(sumRes.data).sort() : []
-          const latestCount = dates.length > 0 ? sumRes.data[dates[dates.length - 1]] : 0
-          return { id, count: latestCount, data: sumRes?.data || {} }
-        }))
-        
-        // Sort for popular courses (top 5)
-        const sortedStats = [...stats].sort((a, b) => b.count - a.count)
-        setCourseStats(sortedStats)
-        
-        // Build aggregated data for "All Courses"
-        const agg = {}
-        stats.forEach(stat => {
-          Object.keys(stat.data).forEach(date => {
-            agg[date] = (agg[date] || 0) + stat.data[date]
-          })
-        })
-        setAggregatedData(agg)
-        
-        setSelectedCourse('All Courses')
+    
+    unsubAllCoursesRef.current = listenAllCourseIds(({ send, error }) => {
+      if (error) {
+        console.error("Error listening to courses:", error)
+        setLoading(false)
+        return
       }
-    } catch (error) {
-      console.error("Error fetching courses:", error)
-    } finally {
-      setLoading(false)
-    }
+
+      if (send && send.length > 0) {
+        setCourseOptions(send)
+        
+        const currentCourseIds = new Set(send)
+        
+        // Remove unsubscribes for courses that no longer exist
+        Object.keys(unsubCourseStatsRef.current).forEach(id => {
+          if (!currentCourseIds.has(id)) {
+            unsubCourseStatsRef.current[id]()
+            delete unsubCourseStatsRef.current[id]
+            setCourseStats(prev => prev.filter(c => c.id !== id))
+          }
+        })
+
+        // Setup listeners for new courses
+        send.forEach(id => {
+          if (!unsubCourseStatsRef.current[id]) {
+            unsubCourseStatsRef.current[id] = listenSummaire(id, ({ data, error }) => {
+              if (error) {
+                console.error(`Error listening to ${id}:`, error)
+                return
+              }
+              
+              const currentData = data || {}
+              const dates = Object.keys(currentData).sort()
+              const latestCount = dates.length > 0 ? currentData[dates[dates.length - 1]] : 0
+
+              setCourseStats(prev => {
+                const existing = prev.find(c => c.id === id)
+                let newStats
+                if (existing) {
+                  newStats = prev.map(c => c.id === id ? { id, count: latestCount, data: currentData } : c)
+                } else {
+                  newStats = [...prev, { id, count: latestCount, data: currentData }]
+                }
+                return newStats.sort((a, b) => b.count - a.count)
+              })
+            })
+          }
+        })
+        
+        setSelectedCourse(prev => (prev === 'All Courses' || currentCourseIds.has(prev)) ? prev : 'All Courses')
+        setLoading(false)
+      } else {
+        setCourseOptions([])
+        setCourseStats([])
+        setLoading(false)
+      }
+    })
   }
+
+  // Calculate aggregated data when course stats update
+  useEffect(() => {
+    if (courseStats.length > 0) {
+      const agg = {}
+      courseStats.forEach(stat => {
+        Object.keys(stat.data).forEach(date => {
+          agg[date] = (agg[date] || 0) + stat.data[date]
+        })
+      })
+      setAggregatedData(agg)
+    } else {
+      setAggregatedData(null)
+    }
+  }, [courseStats])
 
   // Update Data and KPIs when selectedCourse changes
   useEffect(() => {
@@ -255,7 +304,7 @@ const AdminDashBoard = () => {
               {/* Visualization Header & Tabs */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-surface-variant/40 pb-4 mb-6 gap-4">
                 <h3 className="text-headline-md font-headline-md text-on-surface">
-                  {activeVizTab === 'timeline' ? `Enrollment Timeline: ${selectedCourse}` : activeVizTab === 'departments' ? 'Department breakdown' : 'Top 10 Capacity utilization'}
+                  {activeVizTab === 'timeline' ? `Enrollment Timeline: ${selectedCourse}` : 'Department breakdown'}
                 </h3>
                 
                 {/* Horizontal Viz Selector Tabs */}
@@ -273,13 +322,6 @@ const AdminDashBoard = () => {
                   >
                     <span className="material-symbols-outlined text-[18px]">pie_chart</span>
                     Departments
-                  </button>
-                  <button 
-                    onClick={() => setActiveVizTab('utilization')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-md font-bold transition-all ${activeVizTab === 'utilization' ? 'bg-white text-primary shadow-sm' : 'text-soft-gray hover:text-on-surface'}`}
-                  >
-                    <span className="material-symbols-outlined text-[18px]">leaderboard</span>
-                    Utilization
                   </button>
                 </div>
               </div>
@@ -312,11 +354,7 @@ const AdminDashBoard = () => {
                   <div className="w-full p-2 h-full min-h-[400px]">
                     <DonutChart courseStats={courseStats} />
                   </div>
-                ) : (
-                  <div className="w-full p-2 h-full min-h-[400px]">
-                    <CapacityBarChart courseStats={courseStats} />
-                  </div>
-                )}
+                ) : null}
               </div>
             </div>
           </div>

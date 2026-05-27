@@ -1,9 +1,12 @@
 import firebase_app from '../config'
 import { getFirestore, doc, setDoc } from 'firebase/firestore'
 
-const db = getFirestore(firebase_app)
-
 export default async function createNewCourse(courseId) {
+  if (!firebase_app) {
+    return { result: null, error: null }
+  }
+
+  const db = getFirestore(firebase_app)
   let result = null
   let error = null
 

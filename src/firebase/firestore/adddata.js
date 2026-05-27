@@ -1,9 +1,13 @@
 import firebase_app from '../config'
 import { getFirestore, doc, updateDoc } from 'firebase/firestore'
 
-const db = getFirestore(firebase_app)
 //for enrollment data
 export default async function addDataseis(data, id = 'IFT510') {
+  if (!firebase_app) {
+    return { result: null, error: null }
+  }
+
+  const db = getFirestore(firebase_app)
   let result = null
   let error = null
   let k = new Object()

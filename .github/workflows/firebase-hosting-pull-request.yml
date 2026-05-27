@@ -11,6 +11,14 @@ jobs:
   build_and_preview:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_apiKey: ${{ secrets.NEXT_PUBLIC_apiKey }}
+      NEXT_PUBLIC_authDomain: ${{ secrets.NEXT_PUBLIC_authDomain }}
+      NEXT_PUBLIC_projectId: ${{ secrets.NEXT_PUBLIC_projectId }}
+      NEXT_PUBLIC_storageBucket: ${{ secrets.NEXT_PUBLIC_storageBucket }}
+      NEXT_PUBLIC_messagingSenderId: ${{ secrets.NEXT_PUBLIC_messagingSenderId }}
+      NEXT_PUBLIC_appId: ${{ secrets.NEXT_PUBLIC_appId }}
+      NEXT_PUBLIC_collection: ${{ secrets.NEXT_PUBLIC_collection }}
     steps:
       - uses: actions/checkout@v4
       - run: npm install

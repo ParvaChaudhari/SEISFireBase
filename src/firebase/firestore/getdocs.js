@@ -6,9 +6,14 @@ import {
   collection,
   query,
 } from 'firebase/firestore'
-const db = getFirestore(firebase_app)
+
 //for courses and enrollment data
 export default async function getdocsbyuidseis(uid) {
+  if (!firebase_app) {
+    return { send: [], error: null }
+  }
+
+  const db = getFirestore(firebase_app)
   let result = null
   let error = null
   let send = []

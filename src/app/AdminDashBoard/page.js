@@ -9,6 +9,7 @@ import DonutChart from './DonutChart'
 import CapacityBarChart from './CapacityBarChart'
 import listenSummaire from '@/src/firebase/firestore/getsummaire-realtime'
 import listenAllCourseIds from '@/src/firebase/firestore/getAllCourseIds-realtime'
+import listenLatestInsight from '@/src/firebase/firestore/getLatestInsight'
 
 const AdminDashBoard = () => {
   const { user, isAdmin } = useAuthContext()
@@ -30,6 +31,11 @@ const AdminDashBoard = () => {
   // Real-time listener unsubscribes
   const unsubAllCoursesRef = useRef(null)
   const unsubCourseStatsRef = useRef({})
+  const unsubInsightRef = useRef(null)
+
+  // AI Insights State
+  const [aiInsight, setAiInsight] = useState(null)
+  const [isGeneratingInsight, setIsGeneratingInsight] = useState(false)
 
   // Dynamic KPIs for the selected course
   const [kpiData, setKpiData] = useState({
@@ -51,6 +57,7 @@ const AdminDashBoard = () => {
     return () => {
       // Cleanup all listeners on unmount
       if (unsubAllCoursesRef.current) unsubAllCoursesRef.current()
+      if (unsubInsightRef.current) unsubInsightRef.current()
       Object.values(unsubCourseStatsRef.current).forEach(unsub => unsub())
     }
   }, [user, isAdmin])
@@ -68,6 +75,13 @@ const AdminDashBoard = () => {
 
   const setupRealTimeListeners = () => {
     setLoading(true)
+    
+    // Listen to AI Insights
+    unsubInsightRef.current = listenLatestInsight(({ insight, error }) => {
+      if (!error && insight) {
+        setAiInsight(insight)
+      }
+    })
     
     unsubAllCoursesRef.current = listenAllCourseIds(({ send, error }) => {
       if (error) {
@@ -190,6 +204,21 @@ const AdminDashBoard = () => {
 
   const filteredOptions = courseOptions.filter(c => c.toLowerCase().includes(searchQuery.toLowerCase()))
 
+  const generateNewInsight = async () => {
+    setIsGeneratingInsight(true)
+    try {
+      const response = await fetch('/api/generate-insights', { method: 'POST' })
+      const result = await response.json()
+      if (!response.ok) {
+        console.error("Error generating insight:", result.error)
+      }
+    } catch (e) {
+      console.error("Failed to fetch insights:", e)
+    } finally {
+      setIsGeneratingInsight(false)
+    }
+  }
+
   return (
     <div className="bg-background-off-white min-h-screen">
       <Navigation isAdmin={true} />
@@ -252,6 +281,31 @@ const AdminDashBoard = () => {
                   )}
                 </div>
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* AI Insight Card */}
+        <div className="glass-card ambient-shadow rounded-xl p-8 border border-surface-variant bg-gradient-to-r from-primary/5 to-white mb-12 relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4 relative z-10">
+            <div className="flex items-center gap-2 text-primary">
+              <span className="material-symbols-outlined">auto_awesome</span>
+              <h3 className="text-headline-md font-headline-md">Smart Insights</h3>
+            </div>
+            <button 
+              onClick={generateNewInsight} 
+              disabled={isGeneratingInsight}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-label-md font-bold text-white transition-all ${isGeneratingInsight ? 'bg-primary/50 cursor-not-allowed' : 'bg-primary hover:bg-primary/90 shadow-md'}`}
+            >
+              <span className="material-symbols-outlined text-[18px]">{isGeneratingInsight ? 'hourglass_empty' : 'refresh'}</span>
+              {isGeneratingInsight ? 'Analyzing...' : 'Generate Latest Insight'}
+            </button>
+          </div>
+          <div className="relative z-10">
+            {aiInsight ? (
+              <p className="text-body-lg font-body-lg text-on-surface leading-relaxed">{aiInsight}</p>
+            ) : (
+              <p className="text-soft-gray italic">No insights generated yet. Click the button above to analyze recent data.</p>
             )}
           </div>
         </div>

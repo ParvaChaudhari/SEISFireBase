@@ -1,7 +1,7 @@
-'use client'
+"use client"
 import React from 'react'
-import { signOut } from 'firebase/auth'
-import { auth } from '@/src/context/AuthContext'
+import { signOut, getAuth } from 'firebase/auth'
+import firebase_app from '@/src/firebase/config'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuthContext } from '@/src/context/AuthContext'
@@ -13,7 +13,12 @@ const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
 
   const handleSignOut = () => {
-    signOut(auth)
+    if (!firebase_app) {
+      router.replace('/Login')
+      return
+    }
+    const authInstance = getAuth(firebase_app)
+    signOut(authInstance)
       .then(() => {
         router.replace('/Login')
       })

@@ -1,7 +1,12 @@
 import firebase_app from '../config'
 import { getFirestore, doc, getDoc } from 'firebase/firestore'
-const db = getFirestore(firebase_app)
+
 export default async function getsummaire(id) {
+  if (!firebase_app) {
+    return { data: null, error: null }
+  }
+
+  const db = getFirestore(firebase_app)
   let docref = doc(db, process.env.NEXT_PUBLIC_collection_summaire, id)
   let data = null
   let error = null

@@ -6,10 +6,14 @@ import {
   collection,
   query,
 } from 'firebase/firestore'
-const db = getFirestore(firebase_app)
 
 //for alerts data
 export default async function getdocsbyuidalerts(uid) {
+  if (!firebase_app) {
+    return { send: [], error: null }
+  }
+
+  const db = getFirestore(firebase_app)
   let result = null
   let error = null
   let send = []

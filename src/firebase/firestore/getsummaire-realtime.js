@@ -1,9 +1,13 @@
 import firebase_app from '../config'
 import { getFirestore, doc, onSnapshot } from 'firebase/firestore'
 
-const db = getFirestore(firebase_app)
-
 export default function listenSummaire(id, callback) {
+  if (!firebase_app) {
+    callback({ data: null, error: null })
+    return () => {}
+  }
+
+  const db = getFirestore(firebase_app)
   let docref = doc(db, process.env.NEXT_PUBLIC_collection_summaire, id)
   
   const unsubscribe = onSnapshot(docref, (snap) => {

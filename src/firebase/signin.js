@@ -1,9 +1,13 @@
 import firebase_app from './config'
 import { signInWithEmailAndPassword, getAuth } from 'firebase/auth'
 
-const auth = getAuth(firebase_app)
-
 export default async function signIn(email, password) {
+  if (!firebase_app) {
+    return { result: null, error: new Error('Firebase not initialized') }
+  }
+
+  const auth = getAuth(firebase_app)
+
   let result = null,
     error = null
   try {

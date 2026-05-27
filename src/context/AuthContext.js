@@ -1,9 +1,7 @@
-'use client'
-import {createContext,useContext,useState,useEffect} from 'react'
+"use client"
+import { createContext, useContext, useState, useEffect } from 'react'
 import { onAuthStateChanged, getAuth } from 'firebase/auth'
 import firebase_app from '@/src/firebase/config'
-
-export const auth = getAuth(firebase_app)
 
 export const AuthContext = createContext({})
 
@@ -15,6 +13,14 @@ export const AuthContextProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!firebase_app) {
+      // Firebase not initialized on server; nothing to do.
+      setLoading(false)
+      return
+    }
+
+    const auth = getAuth(firebase_app)
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         try {

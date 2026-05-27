@@ -15,23 +15,19 @@ const UserDashBoard = () => {
   const [courses, setCourses] = useState([])
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [changed, setChanged] = useState(false)
-  const isFirstRender = useRef(true)
-
   useEffect(() => {
     if (user === null) {
-      if (!isFirstRender.current) {
-        router.replace('/Login')
-      }
+      router.replace('/Login')
     } else if (isAdmin) {
       router.replace('/AdminDashBoard')
     } else {
       fetchData()
     }
-    isFirstRender.current = false
-  }, [user, isAdmin])
+  }, [user, isAdmin, router])
 
   const fetchData = async () => {
+    if (!user || !user.uid) return;
+    
     setLoading(true)
     try {
       const courseRes = await getdocsbyuidseis(user.uid)

@@ -12,7 +12,7 @@ import listenAllCourseIds from '@/src/firebase/firestore/getAllCourseIds-realtim
 import listenLatestInsight from '@/src/firebase/firestore/getLatestInsight'
 
 const AdminDashBoard = () => {
-  const { user, isAdmin } = useAuthContext()
+  const { user, isAdmin, loading: authLoading } = useAuthContext()
   const router = useRouter()
   
   const [selectedCourse, setSelectedCourse] = useState('All Courses')
@@ -46,9 +46,14 @@ const AdminDashBoard = () => {
   })
 
   useEffect(() => {
+    if (authLoading) return // wait for auth to initialize
+
     if (user === null) {
       router.replace('/Login')
-    } else if (isAdmin) {
+      return
+    }
+
+    if (isAdmin) {
       setupRealTimeListeners()
     } else {
       router.replace('/UserDashBoard')
@@ -60,7 +65,7 @@ const AdminDashBoard = () => {
       if (unsubInsightRef.current) unsubInsightRef.current()
       Object.values(unsubCourseStatsRef.current).forEach(unsub => unsub())
     }
-  }, [user, isAdmin])
+  }, [user, isAdmin, authLoading])
 
   // Close dropdown when clicking outside
   useEffect(() => {

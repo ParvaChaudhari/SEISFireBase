@@ -11,9 +11,11 @@ const SignUpPage = () => {
   const [pass, setpass] = useState('')
   const [cpass, setcpass] = useState('')
   const router = useRouter()
-  const { user } = useAuthContext()
+  const { user, loading: authLoading } = useAuthContext()
 
   useEffect(() => {
+    if (authLoading) return
+
     if (user != null) {
       user.getIdTokenResult().then((idTokenResult) => {
         if (idTokenResult.claims.admin) {
@@ -23,7 +25,7 @@ const SignUpPage = () => {
         }
       })
     }
-  }, [user])
+  }, [user, authLoading])
 
   const handleSignUp = async (e) => {
     e.preventDefault()

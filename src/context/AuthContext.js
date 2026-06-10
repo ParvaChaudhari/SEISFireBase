@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import { onAuthStateChanged, getAuth } from 'firebase/auth'
 import firebase_app from '@/src/firebase/config'
 
-export const AuthContext = createContext({})
+export const AuthContext = createContext({ user: null, isAdmin: false, loading: true })
 
 export const useAuthContext = () => useContext(AuthContext)
 
@@ -73,7 +73,7 @@ export const AuthContextProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin }}>
+    <AuthContext.Provider value={{ user, isAdmin, loading }}>
       {children}
     </AuthContext.Provider>
   )

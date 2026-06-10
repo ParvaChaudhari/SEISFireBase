@@ -4,7 +4,6 @@ import {useEffect, useState} from 'react'
 import signIn from '@/src/firebase/signin'
 import { useRouter } from 'next/navigation'
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
-import { auth } from '@/src/context/AuthContext'
 import { useAuthContext } from '@/src/context/AuthContext'
 import Link from 'next/link'
 
@@ -13,9 +12,11 @@ const Login = () => {
   const [pass, setpass] = useState('')
   const [roleTab, setRoleTab] = useState('student')
   const router = useRouter()
-  const { user } = useAuthContext()
+  const { user, loading: authLoading } = useAuthContext()
 
   useEffect(() => {
+    if (authLoading) return
+
     if (user != null) {
       user.getIdTokenResult().then((idTokenResult) => {
         if (idTokenResult.claims.admin || user.email === 'admin@demo.com') {
@@ -25,7 +26,7 @@ const Login = () => {
         }
       })
     }
-  }, [user])
+  }, [user, authLoading])
 
   const handleSignIn = async (e) => {
     e.preventDefault()

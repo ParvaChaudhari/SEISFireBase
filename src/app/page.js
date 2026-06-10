@@ -7,9 +7,11 @@ import './globals.css'
 
 const RootPage = () => {
   const router = useRouter()
-  const { user } = useAuthContext()
+  const { user, loading: authLoading } = useAuthContext()
 
   useEffect(() => {
+    if (authLoading) return
+
     if (user != null) {
       user.getIdTokenResult().then((idTokenResult) => {
         if (idTokenResult.claims.admin || user.email === 'admin@demo.com') {
@@ -21,7 +23,7 @@ const RootPage = () => {
     } else {
       router.replace('/Login')
     }
-  }, [user])
+  }, [user, authLoading])
 
   // Show nothing while redirect happens
   return null

@@ -12,14 +12,19 @@ const SetAlerts = () => {
   const [courseOptions, setCourseOptions] = useState([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const { user, isAdmin } = useAuthContext()
+  const { user, isAdmin, loading: authLoading } = useAuthContext()
   const router = useRouter()
   const count = useRef(0)
 
   useEffect(() => {
+    if (authLoading) return
+
     if (user === null) {
       router.replace('/Login')
-    } else if (isAdmin) {
+      return
+    }
+
+    if (isAdmin) {
       router.replace('/AdminDashBoard')
     } else {
       fetchAlertOptions()

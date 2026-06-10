@@ -8,7 +8,7 @@ import getAllCourseIds from '@/src/firebase/firestore/getAllCourseIds'
 import createNewCourse from '@/src/firebase/firestore/createNewCourse'
 
 const CourseManagement = () => {
-  const { user, isAdmin } = useAuthContext()
+  const { user, isAdmin, loading: authLoading } = useAuthContext()
   const router = useRouter()
   
   const [newCourseId, setNewCourseId] = useState('')
@@ -17,14 +17,19 @@ const CourseManagement = () => {
   const [courses, setCourses] = useState([])
 
   useEffect(() => {
+    if (authLoading) return
+
     if (user === null) {
       router.replace('/Login')
-    } else if (isAdmin) {
+      return
+    }
+
+    if (isAdmin) {
       fetchCourses()
     } else {
       router.replace('/UserDashBoard')
     }
-  }, [user, isAdmin])
+  }, [user, isAdmin, authLoading])
 
   const fetchCourses = async () => {
     setLoading(true)

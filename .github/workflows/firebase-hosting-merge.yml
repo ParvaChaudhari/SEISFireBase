@@ -17,6 +17,8 @@ jobs:
       NEXT_PUBLIC_messagingSenderId: ${{ secrets.NEXT_PUBLIC_messagingSenderId }}
       NEXT_PUBLIC_appId: ${{ secrets.NEXT_PUBLIC_appId }}
       NEXT_PUBLIC_collection: ${{ secrets.NEXT_PUBLIC_collection }}
+      NEXT_PUBLIC_collection_alerts: ${{ secrets.NEXT_PUBLIC_collection_alerts }}
+      NEXT_PUBLIC_collection_summaire: ${{ secrets.NEXT_PUBLIC_collection_summaire }}
     steps:
       - uses: actions/checkout@v4
       - run: npm install

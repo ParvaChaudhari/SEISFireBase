@@ -285,30 +285,7 @@ const AdminDashBoard = () => {
           </div>
         </div>
 
-        {/* AI Insight Card */}
-        <div className="glass-card ambient-shadow rounded-xl p-8 border border-surface-variant bg-gradient-to-r from-primary/5 to-white mb-12 relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4 relative z-10">
-            <div className="flex items-center gap-2 text-primary">
-              <span className="material-symbols-outlined">auto_awesome</span>
-              <h3 className="text-headline-md font-headline-md">Smart Insights</h3>
-            </div>
-            <button 
-              onClick={generateNewInsight} 
-              disabled={isGeneratingInsight}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-label-md font-bold text-white transition-all ${isGeneratingInsight ? 'bg-primary/50 cursor-not-allowed' : 'bg-primary hover:bg-primary/90 shadow-md'}`}
-            >
-              <span className="material-symbols-outlined text-[18px]">{isGeneratingInsight ? 'hourglass_empty' : 'refresh'}</span>
-              {isGeneratingInsight ? 'Analyzing...' : 'Generate Latest Insight'}
-            </button>
-          </div>
-          <div className="relative z-10">
-            {aiInsight ? (
-              <p className="text-body-lg font-body-lg text-on-surface leading-relaxed">{aiInsight}</p>
-            ) : (
-              <p className="text-soft-gray italic">No insights generated yet. Click the button above to analyze recent data.</p>
-            )}
-          </div>
-        </div>
+        
 
         {/* KPI Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-12">
@@ -361,23 +338,7 @@ const AdminDashBoard = () => {
                   {activeVizTab === 'timeline' ? `Enrollment Timeline: ${selectedCourse}` : 'Department breakdown'}
                 </h3>
                 
-                {/* Horizontal Viz Selector Tabs */}
-                <div className="flex bg-surface-container-low p-1 rounded-xl border border-surface-variant/20">
-                  <button 
-                    onClick={() => setActiveVizTab('timeline')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-md font-bold transition-all ${activeVizTab === 'timeline' ? 'bg-white text-primary shadow-sm' : 'text-soft-gray hover:text-on-surface'}`}
-                  >
-                    <span className="material-symbols-outlined text-[18px]">timeline</span>
-                    Timeline
-                  </button>
-                  <button 
-                    onClick={() => setActiveVizTab('departments')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-md font-bold transition-all ${activeVizTab === 'departments' ? 'bg-white text-primary shadow-sm' : 'text-soft-gray hover:text-on-surface'}`}
-                  >
-                    <span className="material-symbols-outlined text-[18px]">pie_chart</span>
-                    Departments
-                  </button>
-                </div>
+
               </div>
 
               {/* Dynamic Chart Display based on Tab */}
@@ -404,11 +365,7 @@ const AdminDashBoard = () => {
                       <p className="font-body-md">No visualization data available for {selectedCourse}</p>
                     </div>
                   )
-                ) : activeVizTab === 'departments' ? (
-                  <div className="w-full p-2 h-full min-h-[400px]">
-                    <DonutChart courseStats={courseStats} />
-                  </div>
-                ) : null}
+                ) :  null}
               </div>
             </div>
           </div>
